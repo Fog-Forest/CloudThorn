@@ -39,5 +39,7 @@ def get_driver():
     else:
         raise ValueError(f"Unsupported operating system: {system}")
     options.binary_location = chrome_binary_path
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
     driver = uc.Chrome(options=options)
     return driver
