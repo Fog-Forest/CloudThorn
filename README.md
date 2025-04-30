@@ -28,7 +28,6 @@ HTTP 请求，支持 GET 和 POST 方法，并可自定义请求头和请求数�
      restart: always
      environment:
        - TZ=Asia/Shanghai
-       - API_PORT=8675
      ports:
        - "8675:8675"
    ```
