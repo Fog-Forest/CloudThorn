@@ -1,12 +1,11 @@
 import json
-import time
 
-import undetected_chromedriver as uc
+import time
 from fastapi import FastAPI, HTTPException
 from selenium.common.exceptions import TimeoutException
 
 from app.models.models import BrowserRequest
-from app.services.services import execute_xhr_request
+from app.services.services import execute_xhr_request, get_driver
 
 # 创建 FastAPI 应用
 app = FastAPI()
@@ -20,7 +19,7 @@ async def proxy_request(request: BrowserRequest):
     # 记录请求开始时间
     start_timestamp = int(time.time() * 1000)
     try:
-        driver = uc.Chrome()
+        driver = get_driver()
         driver.set_page_load_timeout(request.timeout / 1000)
 
         # 处理带自定义头的请求
