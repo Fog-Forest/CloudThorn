@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from selenium.common.exceptions import TimeoutException
 from urllib.parse import urlparse
 
-from app.models.models import BrowserRequest
+from app.models.models import BrowserRequest, FinalResponse, ResponseDetail
 from app.services.services import execute_xhr_request, get_driver
 from app.utils.utils import convert_cookies_string_to_json
 
