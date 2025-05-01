@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from selenium.common.exceptions import TimeoutException
 from urllib.parse import urlparse
 
-from app.models.models import BrowserRequest, FinalResponse, ResponseDetail
+from app.models.models import BrowserRequest, BrowserResponse, ResponseDetail
 from app.services.services import execute_xhr_request, get_driver
 from app.utils.utils import convert_cookies_string_to_json
 
@@ -58,7 +58,7 @@ async def proxy_request(request: BrowserRequest):
                 startTimestamp=start_timestamp,
                 endTimestamp=end_timestamp
             )
-            return FinalResponse(success=True, detail=detail)
+            return BrowserResponse(success=True, detail=detail)
         elif request.method.lower() == 'post':
             # 如果有 cookies，再次访问主域名；否则访问空白页面
             if request.cookies:
@@ -76,16 +76,14 @@ async def proxy_request(request: BrowserRequest):
             # 记录请求结束的时间戳
             end_timestamp = int(time.time() * 1000)
 
-            # 根据响应状态码进行不同处理
-            if 200 <= result['status'] < 300:
-                try:
-                    # 尝试将响应内容解析为 JSON
-                    response_data = json.loads(result['response'])
-                except json.JSONDecodeError:
-                    # 如果解析失败，直接使用原始响应内容
-                    response_data = result['response']
-                # 返回成功的请求结果
-                detail = ResponseDetail(
+            try:
+                # 尝试将响应内容解析为 JSON
+                response_data = json.loads(result['response'])
+            except json.JSONDecodeError:
+                # 如果解析失败，直接使用原始响应内容
+                response_data = result['response']
+            # 返回成功的请求结果
+            detail = ResponseDetail(
                     url=request.url,
                     status=result['status'],
                     headers=request.headers,
@@ -93,10 +91,7 @@ async def proxy_request(request: BrowserRequest):
                     startTimestamp=start_timestamp,
                     endTimestamp=end_timestamp
                 )
-                return FinalResponse(success=True, detail=detail)
-            else:
-                # 如果响应状态码不在 200 - 299 范围内，抛出相应的错误
-                raise HTTPException(status_code=result['status'], detail=result['response'])
+            return BrowserResponse(success=True, detail=detail)
         else:
             # 如果请求方法不是 GET 或 POST，抛出 400 错误
             raise HTTPException(status_code=400, detail="Invalid request method. Only GET and POST are supported.")

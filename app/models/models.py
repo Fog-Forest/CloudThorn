@@ -1,5 +1,5 @@
 from pydantic import BaseModel, validator
-from typing import Optional
+from typing import Optional, Union
 
 
 # 定义浏览器请求的数据模型
@@ -37,12 +37,12 @@ class ResponseDetail(BaseModel):
     url: str
     status: int
     headers: dict
-    response: dict or str
+    response: Union[dict, str]
     startTimestamp: int
     endTimestamp: int
 
 
-# 定义最终响应的数据模型
-class FinalResponse(BaseModel):
+# 定义浏览器响应的数据模型
+class BrowserResponse(BaseModel):
     success: bool
     detail: ResponseDetail
