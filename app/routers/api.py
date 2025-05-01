@@ -84,13 +84,13 @@ async def proxy_request(request: BrowserRequest):
                 response_data = result['response']
             # 返回成功的请求结果
             detail = ResponseDetail(
-                    url=request.url,
-                    status=result['status'],
-                    headers=request.headers,
-                    response=response_data,
-                    startTimestamp=start_timestamp,
-                    endTimestamp=end_timestamp
-                )
+                url=request.url,
+                status=result['status'],
+                headers=request.headers if request.headers else {},
+                response=response_data,
+                startTimestamp=start_timestamp,
+                endTimestamp=end_timestamp
+            )
             return BrowserResponse(success=True, detail=detail)
         else:
             # 如果请求方法不是 GET 或 POST，抛出 400 错误
