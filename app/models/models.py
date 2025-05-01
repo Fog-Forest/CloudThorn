@@ -12,10 +12,10 @@ class BrowserRequest(BaseModel):
     headers: Optional[dict] = None
     # 请求的 Cookie， 可选
     cookies: Optional[str] = None
-    # 请求超时时间，默认 30000 毫秒
-    timeout: int = 30000
     # 请求数据，POST 请求时必须
     data: Optional[str] = None
+    # 请求超时时间，默认 30000 毫秒
+    timeout: int = 30000
 
     # 验证请求方法是否合法
     @validator('method')
