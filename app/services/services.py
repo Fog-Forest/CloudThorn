@@ -5,6 +5,10 @@ import undetected_chromedriver as uc
 
 # 使用浏览器执行 XHR 请求
 def execute_xhr_request(driver, method, url, headers=None, data=None):
+    # 检查 headers 中是否包含 cookie
+    if headers and 'cookie' in [key.lower() for key in headers.keys()]:
+        raise ValueError("Please use a dedicated field to import cookies instead of specifying them in headers.")
+
     # 定义执行 XHR 请求的 JavaScript 脚本
     script = """
     const [method, url, headers, data] = arguments;
