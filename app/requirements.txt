@@ -1,4 +1,5 @@
 fastapi
+tldextract
 undetected-chromedriver
 selenium
 uvicorn
