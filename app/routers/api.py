@@ -50,14 +50,15 @@ async def proxy_request(request: BrowserRequest):
             # 记录请求结束的时间戳
             end_timestamp = int(time.time() * 1000)
             # 返回请求结果
-            return {
-                "url": request.url,
-                "status": 200,
-                "headers": {},
-                "response": driver.page_source,
-                "startTimestamp": start_timestamp,
-                "endTimestamp": end_timestamp
-            }
+            detail = ResponseDetail(
+                url=request.url,
+                status=200,
+                headers={},
+                response=driver.page_source,
+                startTimestamp=start_timestamp,
+                endTimestamp=end_timestamp
+            )
+            return FinalResponse(success=True, detail=detail)
         elif request.method.lower() == 'post':
             # 如果有 cookies，再次访问主域名；否则访问空白页面
             if request.cookies:
@@ -84,14 +85,15 @@ async def proxy_request(request: BrowserRequest):
                     # 如果解析失败，直接使用原始响应内容
                     response_data = result['response']
                 # 返回成功的请求结果
-                return {
-                    "url": request.url,
-                    "status": result['status'],
-                    "headers": request.headers,
-                    "response": response_data,
-                    "startTimestamp": start_timestamp,
-                    "endTimestamp": end_timestamp
-                }
+                detail = ResponseDetail(
+                    url=request.url,
+                    status=result['status'],
+                    headers=request.headers,
+                    response=response_data,
+                    startTimestamp=start_timestamp,
+                    endTimestamp=end_timestamp
+                )
+                return FinalResponse(success=True, detail=detail)
             else:
                 # 如果响应状态码不在 200 - 299 范围内，抛出相应的错误
                 raise HTTPException(status_code=result['status'], detail=result['response'])
@@ -102,25 +104,27 @@ async def proxy_request(request: BrowserRequest):
     except TimeoutException:
         # 如果请求超时，记录结束时间戳并抛出 408 错误
         end_timestamp = int(time.time() * 1000)
-        raise HTTPException(status_code=408, detail={
-            "url": request.url,
-            "status": 408,
-            "headers": request.headers if request.headers else {},
-            "response": "Request timeout",
-            "startTimestamp": start_timestamp,
-            "endTimestamp": end_timestamp
-        })
+        detail = ResponseDetail(
+            url=request.url,
+            status=408,
+            headers=request.headers if request.headers else {},
+            response="Request timeout",
+            startTimestamp=start_timestamp,
+            endTimestamp=end_timestamp
+        )
+        raise HTTPException(status_code=408, detail={"success": False, "detail": detail.dict()})
     except Exception as e:
         # 如果发生其他异常，记录结束时间戳并抛出 500 错误
         end_timestamp = int(time.time() * 1000)
-        raise HTTPException(status_code=500, detail={
-            "url": request.url,
-            "status": 500,
-            "headers": request.headers if request.headers else {},
-            "response": str(e),
-            "startTimestamp": start_timestamp,
-            "endTimestamp": end_timestamp
-        })
+        detail = ResponseDetail(
+            url=request.url,
+            status=500,
+            headers=request.headers if request.headers else {},
+            response=str(e),
+            startTimestamp=start_timestamp,
+            endTimestamp=end_timestamp
+        )
+        raise HTTPException(status_code=500, detail={"success": False, "detail": detail.dict()})
     finally:
         # 无论请求是否成功，最后都关闭浏览器驱动
         if driver:

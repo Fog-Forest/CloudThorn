@@ -70,18 +70,21 @@ CloudThorn 是一个基于 FastAPI 框架开发的网络代理服务，通过集
 
 ```json
 {
-  "url": "",
-  // 请求的 URL
-  "status": 200,
-  // 响应状态码
-  "headers": {},
-  // 响应头
-  "response": "<!DOCTYPE html>...",
-  // 响应内容
-  "startTimestamp": 1594872947467,
-  // 请求开始时间戳（毫秒）
-  "endTimestamp": 1594872949617
-  // 请求结束时间戳（毫秒）
+   "success": true,
+   "detail": {
+      "url": "",
+      // 请求的 URL
+      "status": 200,
+      // 响应状态码
+      "headers": {},
+      // 响应头
+      "response": "<!DOCTYPE html>...",
+      // 响应内容
+      "startTimestamp": 1594872947467,
+      // 请求开始时间戳（毫秒）
+      "endTimestamp": 1594872949617
+      // 请求结束时间戳（毫秒）
+   }
 }
 ```
 

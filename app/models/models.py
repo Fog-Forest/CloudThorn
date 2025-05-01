@@ -30,3 +30,19 @@ class BrowserRequest(BaseModel):
         if values.get('method') == 'post' and v is None:
             raise ValueError('Data is required for POST requests')
         return v
+
+
+# 定义响应详情的数据模型
+class ResponseDetail(BaseModel):
+    url: str
+    status: int
+    headers: dict
+    response: dict or str
+    startTimestamp: int
+    endTimestamp: int
+
+
+# 定义最终响应的数据模型
+class FinalResponse(BaseModel):
+    success: bool
+    detail: ResponseDetail
