@@ -11,6 +11,45 @@ from app.utils.utils import convert_cookies_string_to_json
 # 创建 FastAPI 应用实例
 app = FastAPI()
 
+
+# 封装执行 XHR 请求的逻辑
+def execute_xhr_and_get_response(driver, request, start_timestamp):
+    # 如果有 cookies，再次访问主域名；否则访问空白页面
+    parsed_url = urlparse(request.url)
+    main_domain = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    if request.cookies:
+        driver.get(main_domain)
+    else:
+        driver.get("about:blank")
+    # 执行 XHR 请求
+    result = execute_xhr_request(
+        driver,
+        request.method,
+        request.url,
+        request.headers,
+        request.data
+    )
+    # 记录请求结束的时间戳
+    end_timestamp = int(time.time() * 1000)
+
+    try:
+        # 尝试将响应内容解析为 JSON
+        response_data = json.loads(result['response'])
+    except json.JSONDecodeError:
+        # 如果解析失败，直接使用原始响应内容
+        response_data = result['response']
+    # 返回成功的请求结果
+    detail = ResponseDetail(
+        url=request.url,
+        status=result['status'],
+        headers=request.headers if request.headers else {},
+        response=response_data,
+        startTimestamp=start_timestamp,
+        endTimestamp=end_timestamp
+    )
+    return BrowserResponse(success=True, detail=detail)
+
+
 # 处理 /v1 的 POST 请求
 @app.post("/v1")
 async def proxy_request(request: BrowserRequest):
@@ -43,58 +82,31 @@ async def proxy_request(request: BrowserRequest):
                 # 如果 cookies 格式无效，抛出 400 错误
                 raise HTTPException(status_code=400, detail=f"Invalid cookies format: {str(e)}")
 
-        # 根据请求方法进行不同处理
-        if request.method.lower() == 'get':
-            # 发起 GET 请求
-            driver.get(request.url)
-            # 记录请求结束的时间戳
-            end_timestamp = int(time.time() * 1000)
-            # 返回请求结果
-            detail = ResponseDetail(
-                url=request.url,
-                status=200,
-                headers={},
-                response=driver.page_source,
-                startTimestamp=start_timestamp,
-                endTimestamp=end_timestamp
-            )
-            return BrowserResponse(success=True, detail=detail)
-        elif request.method.lower() == 'post':
-            # 如果有 cookies，再次访问主域名；否则访问空白页面
-            if request.cookies:
-                driver.get(main_domain)
-            else:
-                driver.get("about:blank")
-            # 执行 XHR 请求
-            result = execute_xhr_request(
-                driver,
-                request.method,
-                request.url,
-                request.headers,
-                request.data
-            )
-            # 记录请求结束的时间戳
-            end_timestamp = int(time.time() * 1000)
-
-            try:
-                # 尝试将响应内容解析为 JSON
-                response_data = json.loads(result['response'])
-            except json.JSONDecodeError:
-                # 如果解析失败，直接使用原始响应内容
-                response_data = result['response']
-            # 返回成功的请求结果
-            detail = ResponseDetail(
-                url=request.url,
-                status=result['status'],
-                headers=request.headers if request.headers else {},
-                response=response_data,
-                startTimestamp=start_timestamp,
-                endTimestamp=end_timestamp
-            )
-            return BrowserResponse(success=True, detail=detail)
+        # 判断是否指定了 headers
+        if request.headers:
+            return execute_xhr_and_get_response(driver, request, start_timestamp)
         else:
-            # 如果请求方法不是 GET 或 POST，抛出 400 错误
-            raise HTTPException(status_code=400, detail="Invalid request method. Only GET and POST are supported.")
+            # 根据请求方法进行不同处理
+            if request.method.lower() == 'get':
+                # 发起 GET 请求
+                driver.get(request.url)
+                # 记录请求结束的时间戳
+                end_timestamp = int(time.time() * 1000)
+                # 返回请求结果
+                detail = ResponseDetail(
+                    url=request.url,
+                    status=200,
+                    headers={},
+                    response=driver.page_source,
+                    startTimestamp=start_timestamp,
+                    endTimestamp=end_timestamp
+                )
+                return BrowserResponse(success=True, detail=detail)
+            elif request.method.lower() == 'post':
+                return execute_xhr_and_get_response(driver, request, start_timestamp)
+            else:
+                # 如果请求方法不是 GET 或 POST，抛出 400 错误
+                raise HTTPException(status_code=400, detail="Invalid request method. Only GET and POST are supported.")
 
     except TimeoutException:
         # 如果请求超时，记录结束时间戳并抛出 408 错误
